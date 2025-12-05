@@ -8,7 +8,11 @@ def main():
     path = input("Corpus filename (.txt): ").strip()
 
     # Call read_corpus
-    tokens = model_builder.read_corpus(path)
+    try:
+        tokens = model_builder.read_corpus(path)
+    except FileNotFoundError:
+        print(f"Could not open '{path}'. Please provide a valid file path.")
+        return
 
     # Call build_bigram_model
     words, followers = model_builder.build_bigram_model(tokens)
