@@ -13,6 +13,8 @@ def choose_start_word(words):
     # words: a list of strings, example: ['to', 'be,', 'or', 'not', 'that', 'is', 'the', 'question', '.', 'i', 'think' ]
     # Return a random word from the list, which is not in ENDERS
     candidates = [w for w in words if w not in ENDERS]
+    if not candidates:
+        raise ValueError("Corpus must contain at least one non-terminating token")
     return random.choice(candidates)
 
 
@@ -34,9 +36,17 @@ def generate_from_bigram(words, followers, n_tokens=40):
     output.append(current)
 
     while len(output) < n_tokens and current not in ENDERS:
-        # Find the followers of the current word
-        idx = words.index(current)
+        try:
+            idx = words.index(current)
+        except ValueError:
+            break
+
+        if idx >= len(followers):
+            break
+
         options = followers[idx]
+        if not options:
+            break
 
         # Choose a random follower and append it to `output`
         nxt = random.choice(options)
@@ -45,10 +55,15 @@ def generate_from_bigram(words, followers, n_tokens=40):
         if nxt in ENDERS:
             break
 
-    # After the loop ends, combine string in list `output` into a string
-    output_string = ""
-    for word in output:
-        output_string += word
+    # After the loop ends, combine tokens without using join
+    if not output:
+        output_string = ""
+    else:
+        output_string = output[0]
+        index = 1
+        while index < len(output):
+            output_string += " " + output[index]
+            index += 1
 
     # Clean up the string
     output_string = cleanup_spacing(output_string)
@@ -62,7 +77,8 @@ def cleanup_spacing(text):
         text = text.replace(" " + ender, ender)
 
     # Replace duplicate spaces with a single space.
-    test = text.replace("  ", " ")
+    while "  " in text:
+        text = text.replace("  ", " ")
 
     # Capitalize first character.
     try:
